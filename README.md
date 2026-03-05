@@ -1,10 +1,16 @@
 # Raspberry Pi Zero 2W USB Webcam
 
-Loops JPEG images as a USB webcam visible on Mac (Photo Booth, FaceTime, etc).
+Turn a Pi Zero 2W into a USB webcam visible on Mac (Photo Booth, FaceTime, etc).
+
+Two modes:
+1. **Slideshow** — loop local JPEG images
+2. **VDO.Ninja** — grab frames from a remote WebRTC stream, then loop them
 
 ```
 GStreamer (loop JPEGs) → /dev/video50 (v4l2loopback) → uvc-gadget → /dev/video0 (configfs) → USB → Mac
 ```
+
+---
 
 ## Step 0: Flash SD card
 
@@ -24,7 +30,7 @@ Flash [Raspberry Pi OS Lite (64-bit)](https://www.raspberrypi.com/software/) to 
 
 3. Enable SSH (create empty file):
    ```bash
-   touch /Volumes/boot/ssh
+   touch /Volumes/bootfs/ssh
    ```
 
 4. Configure WiFi — create `wpa_supplicant.conf` on boot partition:
@@ -47,11 +53,15 @@ Eject and boot.
 ssh vdo@raspberrypi.local
 git clone https://github.com/zaikinv/raspberry-cam.git ~/raspberry-cam
 cd ~/raspberry-cam
-chmod +x install.sh setup.sh run.sh stop.sh
+chmod +x *.sh
 ./install.sh
 ```
 
-## Step 2: Run
+---
+
+## Part 1: Slideshow mode
+
+Loops 5 random JPEG images as a USB webcam. Each image shows for 1 second.
 
 ```bash
 cd ~/raspberry-cam
@@ -65,21 +75,63 @@ Open **Photo Booth** on Mac — looping images appear.
 ./stop.sh     # teardown everything
 ```
 
+## Part 2: Grab frames from VDO.Ninja
+
+Capture 3 frames from a remote browser stream via WebRTC.
+
+### On the Pi:
+
+```bash
+cd ~/raspberry_ninja
+python3 publish.py --framebuffer STREAMID --password false --noaudio
+```
+
+> **IMPORTANT**: Use `--framebuffer STREAMID`, NOT `--view STREAMID --framebuffer WxH`.
+> The `--view` flag breaks WebRTC renegotiation on GStreamer 1.22 (pad-added never fires).
+
+### In the browser:
+
+Open `https://vdo.ninja/?push=STREAMID&password=false` and allow camera access.
+
+### Grab frames (in a second terminal on Pi):
+
+```bash
+cd ~/raspberry-cam
+python3 grab_frames.py STREAMID
+```
+
+Saves 3 JPEGs to `~/frames/`. Then stop publish.py with Ctrl+C.
+
+### Use grabbed frames as slideshow:
+
+```bash
+cd ~/raspberry-cam
+mkdir -p img
+cp ~/frames/frame_*.jpg img/
+# update stop-index in run.sh if frame count differs
+./setup.sh && ./run.sh
+```
+
+---
+
 ## Hardware
 
 - **Raspberry Pi Zero 2W** (kernel 6.1.21-v8+, aarch64)
 - USB data cable to Mac — use the **data port** (closer to center of Pi)
 - Single cable carries both data + power
 
-## Architecture
+## File overview
 
-| Component | Role |
-|-----------|------|
+| File | Role |
+|------|------|
+| `install.sh` | One-shot installer: deps + v4l2loopback + compile + sample images |
 | `setup.sh` | Creates configfs USB gadget + loads v4l2loopback |
 | `run.sh` | GStreamer slideshow → v4l2loopback → uvc-gadget bridge |
 | `stop.sh` | Kills processes, tears down configfs gadget |
-| `src/uvc-gadget.c` | Minimal UVC bridge (270 lines, hardcoded 640x480 YUY2) |
-| `install.sh` | One-shot installer: raspberry ninja + deps + v4l2loopback + compile |
+| `grab_frames.py` | Captures 3 frames from VDO.Ninja via shared memory |
+| `src/uvc-gadget.c` | Minimal UVC bridge (hardcoded 640x480 YUY2) |
+| `src/uvc.h` | UVC gadget header (userspace only) |
+| `src/Makefile` | Compiles uvc-gadget |
 
 ## Key facts
 
@@ -92,3 +144,4 @@ Open **Photo Booth** on Mac — looping images appear.
 | `streaming_maxpacket` | Must be **2048** (not 1024) |
 | `exclusive_caps` | Must be **0** |
 | configfs symlinks | Must be **relative** (`cd` + `ln -s ../../`) |
+| VDO.Ninja `--view` + `--framebuffer` | Broken — use `--framebuffer STREAMID` only |

@@ -70,6 +70,14 @@ GStreamer (loop JPEGs) → /dev/video50 (v4l2loopback) → uvc-gadget → /dev/v
 multifilesrc (5 JPEGs, 1fps) → jpegdec → videoscale → videoconvert → videorate (15fps) → v4l2sink (mmap)
 ```
 
+### 9. VDO.Ninja frame capture
+- Raspberry Ninja `publish.py` receives WebRTC stream via `--framebuffer STREAMID`
+- Writes raw BGR frames to POSIX shared memory (`psm_raspininja_streamid`)
+- `grab_frames.py` reads shared memory, converts BGR→RGB, saves 3 JPEGs to `~/frames/`
+- **CRITICAL**: Use `--framebuffer STREAMID`, NOT `--view STREAMID --framebuffer WxH`
+  - `--view` catches first in elif chain → different negotiation path → pad-added never fires
+- Verified: 3 frames captured (960x540, 1280x720)
+
 ## Next Steps (optional)
 - [ ] Test stability (replug USB, reopen Photo Booth)
 - [ ] Add systemd service for auto-start on boot
