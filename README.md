@@ -91,7 +91,9 @@ python3 publish.py --framebuffer STREAMID --password false --noaudio
 
 ### In the browser:
 
-Open `https://vdo.ninja/?push=STREAMID&password=false` and allow camera access.
+Open `https://vdo.ninja/?push=STREAMID&password=false&width=640&height=480` and allow camera access.
+
+> `&width=640&height=480` constrains the browser stream to match the slideshow resolution.
 
 ### Grab frames (in a second terminal on Pi):
 
@@ -100,11 +102,18 @@ cd ~/raspberry-cam
 python3 grab_frames.py STREAMID
 ```
 
-Saves 10 JPEGs (640x480) to `img/`. Then stop publish.py with Ctrl+C.
+Saves 10 JPEGs (640x480) to `~/frames/`. Then stop publish.py with Ctrl+C.
+
+Copy frames into the slideshow directory:
+
+```bash
+cp ~/frames/frame_*.jpg ~/raspberry-cam/img/
+```
 
 ### Start slideshow with grabbed frames:
 
 ```bash
+cd ~/raspberry-cam
 ./setup.sh && ./run.sh
 ```
 
@@ -124,7 +133,7 @@ Saves 10 JPEGs (640x480) to `img/`. Then stop publish.py with Ctrl+C.
 | `setup.sh` | Creates configfs USB gadget + loads v4l2loopback |
 | `run.sh` | GStreamer slideshow → v4l2loopback → uvc-gadget bridge |
 | `stop.sh` | Kills processes, tears down configfs gadget |
-| `grab_frames.py` | Captures 10 frames from VDO.Ninja via shared memory, saves to `img/` |
+| `grab_frames.py` | Captures 10 frames from VDO.Ninja via shared memory, saves to `~/frames/` |
 | `src/uvc-gadget.c` | Minimal UVC bridge (hardcoded 640x480 YUY2) |
 | `src/uvc.h` | UVC gadget header (userspace only) |
 | `src/Makefile` | Compiles uvc-gadget |
@@ -141,3 +150,4 @@ Saves 10 JPEGs (640x480) to `img/`. Then stop publish.py with Ctrl+C.
 | `exclusive_caps` | Must be **0** |
 | configfs symlinks | Must be **relative** (`cd` + `ln -s ../../`) |
 | VDO.Ninja `--view` + `--framebuffer` | Broken — use `--framebuffer STREAMID` only |
+| `setup.sh` fails with "Device or resource busy" | Reboot the Pi — configfs gadget is stuck |
