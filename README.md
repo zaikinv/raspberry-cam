@@ -33,6 +33,13 @@ Stop:
 bash ~/raspberry-cam/live_experiment_3/stop.sh
 ```
 
+Safe shutdown before unplug:
+
+```bash
+bash ~/raspberry-cam/live_experiment_3/stop.sh
+sudo poweroff
+```
+
 Detailed guide: `live_experiment_3/README.md`
 
 Three modes:

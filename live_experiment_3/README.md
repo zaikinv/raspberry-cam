@@ -48,6 +48,16 @@ ssh vdo@raspberrypi.local
 bash ~/raspberry-cam/live_experiment_3/stop.sh
 ```
 
+## Safe Power Down Before Unplug
+
+```bash
+ssh vdo@raspberrypi.local
+bash ~/raspberry-cam/live_experiment_3/stop.sh
+sudo poweroff
+```
+
+Wait until the Pi is fully off (LED activity stops), then unplug USB.
+
 ## Logs
 
 ```bash
