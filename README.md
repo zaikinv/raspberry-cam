@@ -118,6 +118,20 @@ cd ~/raspberry-cam && ./setup.sh && ./run.sh
 
 ---
 
+## Powering off
+
+```bash
+cd ~/raspberry-cam
+./stop.sh
+sudo poweroff
+```
+
+Wait ~10 seconds for the Pi to shut down, then unplug the USB cable.
+
+> Do NOT unplug without running `stop.sh` first — the configfs gadget holds kernel resources that need a clean teardown.
+
+---
+
 ## Hardware
 
 - **Raspberry Pi Zero 2W** (kernel 6.1.21-v8+, aarch64)
