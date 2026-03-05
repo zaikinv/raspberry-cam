@@ -27,7 +27,7 @@
 #define HEIGHT 480
 #define FRAME_SIZE (WIDTH * HEIGHT * 2)
 #define NBUFS 4
-#define TARGET_FPS 20
+#define TARGET_FPS 30
 #define FRAME_NS (1000000000ULL / TARGET_FPS)
 
 #define SHM_PATH "/dev/shm/psm_raspininja_streamid"

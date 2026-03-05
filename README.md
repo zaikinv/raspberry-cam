@@ -2,6 +2,39 @@
 
 Turn a Pi Zero 2W into a USB webcam visible on Mac (Photo Booth, FaceTime, etc).
 
+## Recommended Live Mode (Current)
+
+Use `live_experiment_3` for the smoothest live VDO.Ninja path:
+
+```
+Browser -> publish.py --framebuffer -> POSIX SHM -> uvc_shm_bridge -> /dev/videoX (UVC gadget) -> USB -> Mac
+```
+
+One-time on Pi:
+
+```bash
+cd ~/raspberry-cam/live_experiment_3
+gcc -O2 -Wall -o uvc_shm_bridge uvc_shm_bridge.c
+```
+
+Run:
+
+```bash
+bash ~/raspberry-cam/live_experiment_3/start.sh pitest7x3
+```
+
+Open this sender link in your browser:
+
+`https://vdo.ninja/?push=pitest7x3&password=false&width=640&height=480`
+
+Stop:
+
+```bash
+bash ~/raspberry-cam/live_experiment_3/stop.sh
+```
+
+Detailed guide: `live_experiment_3/README.md`
+
 Three modes:
 1. **Slideshow** — loop local JPEG images
 2. **VDO.Ninja live** — stream live WebRTC video to Mac as a USB webcam (~5fps)

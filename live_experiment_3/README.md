@@ -1,23 +1,47 @@
 # Live Experiment 3
 
-Minimal direct path PoC (no v4l2loopback in active video path).
+Working minimal live chain for Pi -> USB webcam on Mac.
 
 ## Chain
 
-`VDO.Ninja -> publish.py --framebuffer -> /dev/shm/psm_raspininja_streamid -> uvc_shm_bridge -> /dev/videoX (UVC gadget) -> USB -> Mac`
+`Browser (VDO.Ninja push) -> publish.py --framebuffer -> /dev/shm/psm_raspininja_streamid -> uvc_shm_bridge -> /dev/videoX (UVC gadget) -> USB -> Mac`
 
-## One-command start (after every replug/reboot)
+Notes:
+- `v4l2loopback` is still loaded by setup for compatibility, but not used in the active video path.
+- Current bridge output is fixed at `640x480 YUY2 @30fps`.
+
+## Install (one-time on Pi)
+
+```bash
+ssh vdo@raspberrypi.local
+cd ~/raspberry-cam/live_experiment_3
+
+# Build bridge binary
+gcc -O2 -Wall -o uvc_shm_bridge uvc_shm_bridge.c
+chmod +x uvc_shm_bridge start.sh stop.sh live.sh setup.sh
+```
+
+Prerequisites expected on Pi:
+- `~/raspberry_ninja/publish.py` exists
+- kernel has `libcomposite` and `v4l2loopback` available
+- passwordless `sudo` for gadget setup commands
+
+## Run
+
+After each reboot or USB replug:
 
 ```bash
 ssh vdo@raspberrypi.local
 bash ~/raspberry-cam/live_experiment_3/start.sh pitest7x3
 ```
 
-Open sender URL:
+Then open sender URL in browser:
 
 `https://vdo.ninja/?push=pitest7x3&password=false&width=640&height=480`
 
-## One-command stop
+On Mac, open Photo Booth/QuickTime and select the Pi camera.
+
+## Stop
 
 ```bash
 ssh vdo@raspberrypi.local
@@ -26,29 +50,21 @@ bash ~/raspberry-cam/live_experiment_3/stop.sh
 
 ## Logs
 
-Bridge log:
-
 ```bash
 tail -f /tmp/pivideo-live3.log
-```
-
-Publish log:
-
-```bash
 tail -f /tmp/live-exp3-publish.log
 ```
 
-## Expected bridge states
-
-- `Waiting for host...` : Mac app has not opened camera yet.
-- `UVC COMMIT ...` : Mac negotiated stream params.
-- `UVC streaming started` : frames are being pushed to USB camera path.
+Expected bridge states:
+- `Waiting for host...` = Mac has not started camera stream yet
+- `UVC COMMIT ...` = host negotiated stream parameters
+- `UVC streaming started` = frames are flowing
 
 ## Files
 
-- `live.sh` : setup + start publish + start bridge
-- `start.sh` : shortest user command wrapper
-- `stop.sh` : clean stop wrapper
-- `uvc_shm_bridge.c` : SHM -> UVC bridge
-- `setup.sh` : configfs gadget setup reuse
-- `uvc.h` : UVC ioctl definitions
+- `start.sh` : one-command start wrapper
+- `stop.sh` : one-command stop wrapper
+- `live.sh` : setup + launch publish + launch bridge
+- `setup.sh` : configfs UVC gadget setup
+- `uvc_shm_bridge.c` : SHM(BGR) -> YUY2 UVC bridge
+- `uvc.h` : UVC structs/ioctls
