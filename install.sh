@@ -7,7 +7,7 @@ echo "=== Raspberry Cam Installer ==="
 if [ ! -d ~/raspberry_ninja ]; then
   echo "Installing Raspberry Ninja..."
   cd ~
-  git clone https://github.com/nicholasgasior/raspberry-ninja.git raspberry_ninja
+  git clone https://github.com/steveseguin/raspberry-ninja.git raspberry_ninja
   cd raspberry_ninja
   bash install.sh --non-interactive
   cd ~/raspberry-cam
@@ -47,7 +47,7 @@ make -C src
 # ─── 5. Download sample images ──────────────────────────────────────
 echo "Downloading sample images..."
 mkdir -p img
-for i in 1 2 3 4 5; do
+for i in 1 2 3 4 5 6 7 8 9 10; do
   if [ ! -f "img/frame_${i}.jpg" ]; then
     curl -sL "https://picsum.photos/640/480" -o "img/frame_${i}.jpg"
     sleep 1

@@ -41,7 +41,7 @@ echo "GStreamer → /dev/video50 → uvc-gadget → $UVC_DEV → USB"
 
 # GStreamer slideshow
 gst-launch-1.0 \
-  multifilesrc location="$IMG_DIR/frame_%d.jpg" index=1 start-index=1 stop-index=5 loop=true caps="image/jpeg,framerate=1/1" \
+  multifilesrc location="$IMG_DIR/frame_%d.jpg" index=1 start-index=1 stop-index=10 loop=true caps="image/jpeg,framerate=1/1" \
   ! jpegdec ! videoscale ! videoconvert ! videorate \
   ! "video/x-raw,format=YUY2,width=${WIDTH},height=${HEIGHT},framerate=15/1" \
   ! v4l2sink device=/dev/video50 io-mode=mmap &

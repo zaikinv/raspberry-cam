@@ -1,5 +1,5 @@
 """
-Grab 3 frames from a VDO.Ninja stream via shared memory.
+Grab 10 frames from a VDO.Ninja stream via shared memory.
 
 Prerequisites:
   1. Run publish.py in framebuffer mode:
@@ -26,7 +26,7 @@ FRAMES_DIR = os.path.expanduser("~/frames")
 os.makedirs(FRAMES_DIR, exist_ok=True)
 
 print(f"Waiting for shared memory: {SHM_NAME}")
-print(f"Will save 3 frames to {FRAMES_DIR}/")
+print(f"Will save 10 frames to {FRAMES_DIR}/")
 print(f"Make sure publish.py --framebuffer {STREAMID} is running.")
 
 shm = None
@@ -65,14 +65,14 @@ for attempt in range(90):
         print(f"  Saved {path} ({w}x{h}, counter={counter})")
         last_counter = counter
         saved += 1
-        if saved >= 3:
+        if saved >= 10:
             break
         time.sleep(random.uniform(2, 4))
     else:
         time.sleep(0.3)
 
 shm.close()
-if saved >= 3:
+if saved >= 10:
     print(f"Done! {saved} frames saved to {FRAMES_DIR}/")
 else:
     print(f"Only got {saved} frames after {attempt + 1} attempts.")

@@ -61,7 +61,7 @@ chmod +x *.sh
 
 ## Part 1: Slideshow mode
 
-Loops 5 random JPEG images as a USB webcam. Each image shows for 1 second.
+Loops 10 random JPEG images as a USB webcam. Each image shows for 1 second.
 
 ```bash
 cd ~/raspberry-cam
@@ -77,7 +77,7 @@ Open **Photo Booth** on Mac — looping images appear.
 
 ## Part 2: Grab frames from VDO.Ninja
 
-Capture 3 frames from a remote browser stream via WebRTC.
+Capture 10 frames from a remote browser stream via WebRTC, then loop them as a USB webcam.
 
 ### On the Pi:
 
@@ -100,15 +100,11 @@ cd ~/raspberry-cam
 python3 grab_frames.py STREAMID
 ```
 
-Saves 3 JPEGs to `~/frames/`. Then stop publish.py with Ctrl+C.
+Saves 10 JPEGs (640x480) to `img/`. Then stop publish.py with Ctrl+C.
 
-### Use grabbed frames as slideshow:
+### Start slideshow with grabbed frames:
 
 ```bash
-cd ~/raspberry-cam
-mkdir -p img
-cp ~/frames/frame_*.jpg img/
-# update stop-index in run.sh if frame count differs
 ./setup.sh && ./run.sh
 ```
 
@@ -128,7 +124,7 @@ cp ~/frames/frame_*.jpg img/
 | `setup.sh` | Creates configfs USB gadget + loads v4l2loopback |
 | `run.sh` | GStreamer slideshow → v4l2loopback → uvc-gadget bridge |
 | `stop.sh` | Kills processes, tears down configfs gadget |
-| `grab_frames.py` | Captures 3 frames from VDO.Ninja via shared memory |
+| `grab_frames.py` | Captures 10 frames from VDO.Ninja via shared memory, saves to `img/` |
 | `src/uvc-gadget.c` | Minimal UVC bridge (hardcoded 640x480 YUY2) |
 | `src/uvc.h` | UVC gadget header (userspace only) |
 | `src/Makefile` | Compiles uvc-gadget |
