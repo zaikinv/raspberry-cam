@@ -21,8 +21,8 @@ from multiprocessing import shared_memory
 from PIL import Image
 
 STREAMID = sys.argv[1] if len(sys.argv) > 1 else "pitest123"
+FRAMES_DIR = sys.argv[2] if len(sys.argv) > 2 else os.path.expanduser("~/frames")
 SHM_NAME = "psm_raspininja_streamid"
-FRAMES_DIR = os.path.expanduser("~/frames")
 os.makedirs(FRAMES_DIR, exist_ok=True)
 
 print(f"Waiting for shared memory: {SHM_NAME}")

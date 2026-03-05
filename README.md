@@ -13,6 +13,30 @@ GStreamer (loop JPEGs) → /dev/video50 (v4l2loopback) → uvc-gadget → /dev/v
 
 ---
 
+## Quick Start (fresh OS install)
+
+```bash
+# 1. Flash SD, configure WiFi + SSH + dwc2 peripheral (see Step 0 below), boot
+
+# 2. SSH in and clone
+ssh pi@raspberrypi.local
+git clone https://github.com/zaikinv/raspberry-cam.git ~/raspberry-cam
+cd ~/raspberry-cam
+
+# 3. Install everything (takes ~5 min)
+./install.sh
+
+# 4. Run a mode (plug USB cable to Mac first)
+./setup.sh && ./run.sh                    # Mode 1: slideshow
+./grab_and_play.sh STREAMID              # Mode 2: snapshot from VDO.Ninja
+bash live/live.sh STREAMID               # Mode 3: live from VDO.Ninja
+
+# Stop
+./stop.sh
+```
+
+---
+
 ## Step 0: Flash SD card
 
 Flash [Raspberry Pi OS Lite (64-bit)](https://www.raspberrypi.com/software/) to SD card.

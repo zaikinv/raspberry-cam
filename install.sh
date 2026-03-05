@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
 echo "=== Raspberry Cam Installer ==="
 
 # ─── 1. Raspberry Ninja ─────────────────────────────────────────────
@@ -10,7 +12,7 @@ if [ ! -d ~/raspberry_ninja ]; then
   git clone https://github.com/steveseguin/raspberry-ninja.git raspberry_ninja
   cd raspberry_ninja
   bash install.sh --non-interactive
-  cd ~/raspberry-cam
+  cd "$DIR"
 else
   echo "Raspberry Ninja already installed, skipping."
 fi
@@ -34,7 +36,7 @@ if [ ! -f ~/v4l2loopback/v4l2loopback.ko ]; then
   cd v4l2loopback
   git checkout v0.12.5
   make
-  cd ~/raspberry-cam
+  cd "$DIR"
 else
   echo "v4l2loopback already built, skipping."
 fi

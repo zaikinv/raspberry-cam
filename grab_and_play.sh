@@ -8,7 +8,7 @@ pkill -f publish.py 2>/dev/null || true
 sleep 1
 
 # Start grab_frames first, then publish.py
-python3 "$DIR/grab_frames.py" "$STREAMID" &
+python3 "$DIR/grab_frames.py" "$STREAMID" "$DIR/img" &
 GRAB_PID=$!
 sleep 2
 cd ~/raspberry_ninja && python3 publish.py --framebuffer "$STREAMID" --password false --noaudio &
@@ -18,5 +18,4 @@ echo "Open: https://vdo.ninja/?push=${STREAMID}&password=false&width=640&height=
 wait $GRAB_PID
 
 kill $PUBLISH_PID 2>/dev/null || true
-cp ~/frames/frame_*.jpg "$DIR/img/"
 "$DIR/setup.sh" && "$DIR/run.sh"
