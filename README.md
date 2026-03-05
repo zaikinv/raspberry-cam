@@ -150,4 +150,4 @@ cd ~/raspberry-cam
 | `exclusive_caps` | Must be **0** |
 | configfs symlinks | Must be **relative** (`cd` + `ln -s ../../`) |
 | VDO.Ninja `--view` + `--framebuffer` | Broken — use `--framebuffer STREAMID` only |
-| `setup.sh` fails with "Device or resource busy" | Reboot the Pi — configfs gadget is stuck |
+| `setup.sh` fails with "Device or resource busy" | Run `./stop.sh` first — it removes all nested configfs symlinks in the right order |
