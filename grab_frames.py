@@ -47,7 +47,8 @@ print(f"Connected to shared memory ({shm.size} bytes). Grabbing frames...")
 time.sleep(3)
 
 saved = 0
-last_counter = -1
+last_counter = bytes(shm.buf[:5])[4]  # seed with current value to skip stale frame
+print(f"  Initial counter={last_counter}, waiting for new frames...")
 for attempt in range(90):
     hdr = bytes(shm.buf[:5])
     w = hdr[0] * 255 + hdr[1]
@@ -67,7 +68,7 @@ for attempt in range(90):
         saved += 1
         if saved >= 10:
             break
-        time.sleep(random.uniform(2, 4))
+        time.sleep(1)
     else:
         time.sleep(0.3)
 
