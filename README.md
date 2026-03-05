@@ -2,9 +2,10 @@
 
 Turn a Pi Zero 2W into a USB webcam visible on Mac (Photo Booth, FaceTime, etc).
 
-Two modes:
+Three modes:
 1. **Slideshow** — loop local JPEG images
-2. **VDO.Ninja** — grab frames from a remote WebRTC stream, then loop them
+2. **VDO.Ninja live** — stream live WebRTC video to Mac as a USB webcam (~5fps)
+3. **VDO.Ninja snapshot** — grab 10 frames from a WebRTC stream and loop them
 
 ```
 GStreamer (loop JPEGs) → /dev/video50 (v4l2loopback) → uvc-gadget → /dev/video0 (configfs) → USB → Mac
@@ -75,7 +76,46 @@ Open **Photo Booth** on Mac — looping images appear.
 ./stop.sh     # teardown everything
 ```
 
-## Part 2: Grab frames from VDO.Ninja
+## Part 2: Live stream from VDO.Ninja
+
+Stream live video from a WebRTC session directly to Mac as a USB webcam at ~5fps.
+
+### Pipeline
+
+```
+Browser → WebRTC → publish.py → POSIX SHM → shm_to_stdout.py → /tmp/live.jpg → GStreamer → /dev/video50 → uvc-gadget → /dev/video0 → USB → Mac
+```
+
+### Each node explained
+
+| Node | What it does |
+|------|-------------|
+| **Browser** | Opens `vdo.ninja/?push=STREAMID` and streams your camera via WebRTC (H264) |
+| **publish.py** (`~/raspberry_ninja`) | Receives the WebRTC stream, decodes H264 via GStreamer, and writes raw BGR frames into POSIX shared memory (`psm_raspininja_streamid`). Run with `--framebuffer STREAMID --password false --noaudio`. |
+| **POSIX shared memory** | 5-byte header `[w_hi, w_lo, h_hi, h_lo, counter]` followed by `w×h×3` bytes of raw BGR pixel data. Updated at the source frame rate. |
+| **shm_to_stdout.py** (`~/live`) | Reads BGR frames from shared memory at 15fps, converts BGR→RGB, saves atomically to `/tmp/live.jpg` (writes to `.tmp.jpg` first, then `os.rename` — so GStreamer never reads a partial JPEG). |
+| **GStreamer pipeline** | `multifilesrc` re-reads `/tmp/live.jpg` in a loop at 5fps → `jpegdec` decodes → `videoscale` resizes to 640×480 → `videoconvert` → `videorate` smooths output to 15fps → `v4l2sink` writes to v4l2loopback with `io-mode=mmap`. |
+| **/dev/video50** (v4l2loopback) | Virtual V4L2 device. Acts as a shared frame buffer between GStreamer (writer) and uvc-gadget (reader). Loaded with `exclusive_caps=0`. |
+| **uvc-gadget** (`~/raspberry-cam/src`) | Bridges v4l2loopback → USB UVC gadget. Reads YUY2 frames from `/dev/video50`, pushes them to `/dev/video0` (the configfs UVC device). Hardcoded to 640×480 YUY2. |
+| **/dev/video0** (configfs UVC gadget) | USB peripheral endpoint created via configfs. Presents the Pi to Mac as a standard UVC webcam. |
+| **Mac** | Sees a USB webcam. Works in Photo Booth, QuickTime, FaceTime, etc. |
+
+### Run
+
+```bash
+cd ~/live
+bash live.sh STREAMID
+```
+
+Then open in browser:
+
+```
+https://vdo.ninja/?push=STREAMID&password=false&width=640&height=480
+```
+
+---
+
+## Part 3: Grab frames from VDO.Ninja (snapshot mode)
 
 Capture 10 frames from a remote WebRTC stream and loop them as a USB webcam.
 
@@ -148,6 +188,8 @@ Wait ~10 seconds for the Pi to shut down, then unplug the USB cable.
 | `stop.sh` | Kills processes, tears down configfs gadget |
 | `grab_and_play.sh` | One-shot: grab 10 frames from VDO.Ninja + start slideshow |
 | `grab_frames.py` | Captures 10 frames from VDO.Ninja via shared memory, saves to `~/frames/` |
+| `live/live.sh` | Live mode entry point: starts publish.py + shm_to_stdout.py + GStreamer + uvc-gadget |
+| `live/shm_to_stdout.py` | Reads BGR frames from shared memory, writes atomically to `/tmp/live.jpg` at 15fps |
 | `src/uvc-gadget.c` | Minimal UVC bridge (hardcoded 640x480 YUY2) |
 | `src/uvc.h` | UVC gadget header (userspace only) |
 | `src/Makefile` | Compiles uvc-gadget |
