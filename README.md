@@ -77,45 +77,44 @@ Open **Photo Booth** on Mac — looping images appear.
 
 ## Part 2: Grab frames from VDO.Ninja
 
-Capture 10 frames from a remote browser stream via WebRTC, then loop them as a USB webcam.
+Capture 10 frames from a remote WebRTC stream and loop them as a USB webcam.
 
-### On the Pi:
+### One command:
 
 ```bash
-cd ~/raspberry_ninja
-python3 publish.py --framebuffer STREAMID --password false --noaudio
+cd ~/raspberry-cam
+./grab_and_play.sh STREAMID
 ```
+
+Then open the printed URL in the browser and allow camera access:
+
+```
+https://vdo.ninja/?push=STREAMID&password=false&width=640&height=480
+```
+
+The script grabs 10 frames automatically and starts the slideshow.
+
+---
+
+### Manual steps (if needed):
+
+```bash
+# 1. Start grab_frames FIRST (it waits for the stream)
+python3 grab_frames.py STREAMID &
+
+# 2. Start publish.py
+cd ~/raspberry_ninja && python3 publish.py --framebuffer STREAMID --password false --noaudio &
+
+# 3. Open browser URL, then wait for grab to finish
+# 4. Copy frames and start slideshow
+cp ~/frames/frame_*.jpg ~/raspberry-cam/img/
+cd ~/raspberry-cam && ./setup.sh && ./run.sh
+```
+
+> **IMPORTANT**: Always start `grab_frames.py` before `publish.py` and the browser — the shared memory only exists while the stream is active and disappears quickly.
 
 > **IMPORTANT**: Use `--framebuffer STREAMID`, NOT `--view STREAMID --framebuffer WxH`.
 > The `--view` flag breaks WebRTC renegotiation on GStreamer 1.22 (pad-added never fires).
-
-### In the browser:
-
-Open `https://vdo.ninja/?push=STREAMID&password=false&width=640&height=480` and allow camera access.
-
-> `&width=640&height=480` constrains the browser stream to match the slideshow resolution.
-
-### Grab frames (in a second terminal on Pi):
-
-```bash
-cd ~/raspberry-cam
-python3 grab_frames.py STREAMID
-```
-
-Saves 10 JPEGs (640x480) to `~/frames/`. Then stop publish.py with Ctrl+C.
-
-Copy frames into the slideshow directory:
-
-```bash
-cp ~/frames/frame_*.jpg ~/raspberry-cam/img/
-```
-
-### Start slideshow with grabbed frames:
-
-```bash
-cd ~/raspberry-cam
-./setup.sh && ./run.sh
-```
 
 ---
 
@@ -133,6 +132,7 @@ cd ~/raspberry-cam
 | `setup.sh` | Creates configfs USB gadget + loads v4l2loopback |
 | `run.sh` | GStreamer slideshow → v4l2loopback → uvc-gadget bridge |
 | `stop.sh` | Kills processes, tears down configfs gadget |
+| `grab_and_play.sh` | One-shot: grab 10 frames from VDO.Ninja + start slideshow |
 | `grab_frames.py` | Captures 10 frames from VDO.Ninja via shared memory, saves to `~/frames/` |
 | `src/uvc-gadget.c` | Minimal UVC bridge (hardcoded 640x480 YUY2) |
 | `src/uvc.h` | UVC gadget header (userspace only) |
