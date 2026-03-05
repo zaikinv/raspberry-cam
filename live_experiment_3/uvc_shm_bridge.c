@@ -27,7 +27,7 @@
 #define HEIGHT 480
 #define FRAME_SIZE (WIDTH * HEIGHT * 2)
 #define NBUFS 4
-#define TARGET_FPS 15
+#define TARGET_FPS 20
 #define FRAME_NS (1000000000ULL / TARGET_FPS)
 
 #define SHM_PATH "/dev/shm/psm_raspininja_streamid"
@@ -38,7 +38,7 @@ struct uvc_frame_info {
 };
 
 static const struct uvc_frame_info uvc_frames[] = {
-    { 640, 480, { 333333, 333667, 666666, 1000000, 2000000, 0 } },
+    { 640, 480, { 333333, 333667, 500000, 666666, 1000000, 2000000, 0 } },
     { 0, 0, { 0 } },
 };
 
@@ -132,6 +132,38 @@ static inline uint8_t clamp_u8(int v)
     return (uint8_t)v;
 }
 
+/* BGR24 -> YUYV422 (no scaling, source must be WIDTHxHEIGHT). */
+static void bgr_to_yuyv_native(const uint8_t *src, uint8_t *dst)
+{
+    for (int y = 0; y < HEIGHT; y++) {
+        const uint8_t *srow = src + (size_t)y * WIDTH * 3;
+        uint8_t *drow = dst + (size_t)y * WIDTH * 2;
+
+        for (int x = 0; x < WIDTH; x += 2) {
+            const uint8_t *p0 = srow + (size_t)x * 3;
+            const uint8_t *p1 = p0 + 3;
+
+            int b0 = p0[0], g0 = p0[1], r0 = p0[2];
+            int b1 = p1[0], g1 = p1[1], r1 = p1[2];
+
+            int y0 = (( 66 * r0 + 129 * g0 +  25 * b0 + 128) >> 8) + 16;
+            int y1 = (( 66 * r1 + 129 * g1 +  25 * b1 + 128) >> 8) + 16;
+            int u0 = ((-38 * r0 -  74 * g0 + 112 * b0 + 128) >> 8) + 128;
+            int v0 = ((112 * r0 -  94 * g0 -  18 * b0 + 128) >> 8) + 128;
+            int u1 = ((-38 * r1 -  74 * g1 + 112 * b1 + 128) >> 8) + 128;
+            int v1 = ((112 * r1 -  94 * g1 -  18 * b1 + 128) >> 8) + 128;
+
+            int u = (u0 + u1) / 2;
+            int v = (v0 + v1) / 2;
+
+            drow[x * 2 + 0] = clamp_u8(y0);
+            drow[x * 2 + 1] = clamp_u8(u);
+            drow[x * 2 + 2] = clamp_u8(y1);
+            drow[x * 2 + 3] = clamp_u8(v);
+        }
+    }
+}
+
 /* Nearest-neighbor scale + BGR24 -> YUYV422 */
 static void bgr_to_yuyv_scaled(const uint8_t *src, int sw, int sh, uint8_t *dst)
 {
@@ -192,7 +224,10 @@ static int shm_update_latest(struct shm_state *s)
     if (counter == s->last_counter && s->have_frame)
         return 0;
 
-    bgr_to_yuyv_scaled(s->ptr + 5, w, h, s->latest_yuyv);
+    if (w == WIDTH && h == HEIGHT)
+        bgr_to_yuyv_native(s->ptr + 5, s->latest_yuyv);
+    else
+        bgr_to_yuyv_scaled(s->ptr + 5, w, h, s->latest_yuyv);
     s->last_counter = counter;
     s->have_frame = 1;
     return 1;
