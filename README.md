@@ -39,7 +39,7 @@ bash live/live.sh STREAMID               # Mode 3: live from VDO.Ninja
 
 ## Step 0: Flash SD card
 
-Flash [Raspberry Pi OS Lite (64-bit)](https://www.raspberrypi.com/software/) to SD card.
+Flash [raspberry_ninja Image]([https://www.raspberrypi.com/software/](https://github.com/steveseguin/raspberry_ninja/blob/main/installers/raspberry_pi/README.md#installing-from-the-provided-image)) to SD card.
 
 **Before ejecting the SD card**, mount the boot partition and:
 
