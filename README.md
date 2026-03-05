@@ -103,8 +103,7 @@ Browser → WebRTC → publish.py → POSIX SHM → shm_to_stdout.py → /tmp/li
 ### Run
 
 ```bash
-cd ~/live
-bash live.sh STREAMID
+bash ~/raspberry-cam/live/live.sh STREAMID
 ```
 
 Then open in browser:
